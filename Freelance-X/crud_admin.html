@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreelanceX — CRUD Operations Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+.header{background:linear-gradient(135deg,#1e40af,#7c3aed);color:#fff;padding:24px 32px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:22px;font-weight:700}
+.header p{font-size:13px;opacity:.85;margin-top:4px}
+.badge{background:rgba(255,255,255,.2);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600}
+.container{max-width:1200px;margin:0 auto;padding:28px 24px}
+
+/* CRUD Indicator Cards */
+.crud-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.crud-card{background:#fff;border-radius:12px;padding:20px;text-align:center;border-top:4px solid #ddd;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.crud-card.create{border-color:#10B981}
+.crud-card.read{border-color:#2563EB}
+.crud-card.update{border-color:#F59E0B}
+.crud-card.delete{border-color:#EF4444}
+.crud-card .icon{font-size:28px;margin-bottom:8px}
+.crud-card h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.crud-card p{font-size:12px;color:#64748b}
+.crud-card .op{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:8px}
+.create .op{background:#d1fae5;color:#065f46}
+.read .op{background:#dbeafe;color:#1e40af}
+.update .op{background:#fef3c7;color:#92400e}
+.delete .op{background:#fee2e2;color:#991b1b}
+
+/* Tabs */
+.tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.tab{padding:10px 22px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;border:2px solid #e2e8f0;background:#fff;transition:all .2s}
+.tab.active{background:#1e40af;color:#fff;border-color:#1e40af}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* Section headers */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.section-header h2{font-size:18px;font-weight:700}
+.section-header .ops{display:flex;gap:8px;align-items:center}
+
+/* Form */
+.form-card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #10B981}
+.form-card h3{font-size:15px;font-weight:700;color:#065f46;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:12px;font-weight:600;color:#475569}
+.form-group input,.form-group select,.form-group textarea{border:1.5px solid #e2e8f0;border-radius:7px;padding:9px 12px;font-size:13px;outline:none;transition:border-color .2s;font-family:inherit}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-actions{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:10px 20px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-create{background:#10B981;color:#fff}.btn-create:hover{background:#059669}
+.btn-read{background:#2563EB;color:#fff}.btn-read:hover{background:#1d4ed8}
+.btn-update{background:#F59E0B;color:#fff}.btn-update:hover{background:#d97706}
+.btn-delete{background:#EF4444;color:#fff}.btn-delete:hover{background:#dc2626}
+.btn-outline{background:#fff;border:1.5px solid #e2e8f0;color:#475569}.btn-outline:hover{border-color:#2563EB;color:#2563EB}
+
+/* Table */
+.table-card{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;border-left:4px solid #2563EB;margin-bottom:24px}
+.table-card .table-header{padding:16px 20px;font-size:15px;font-weight:700;color:#1e40af;background:#eff6ff;display:flex;align-items:center;justify-content:space-between}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:#f8fafc}
+th{padding:11px 14px;text-align:left;font-weight:600;color:#475569;font-size:12px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0}
+td{padding:12px 14px;border-bottom:1px solid #f1f5f9;color:#374151}
+tr:hover td{background:#f8fafc}
+.badge-role,.badge-status{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-client{background:#dbeafe;color:#1e40af}
+.badge-freelancer{background:#f3e8ff;color:#7c3aed}
+.badge-open{background:#d1fae5;color:#065f46}
+.badge-pending{background:#fef3c7;color:#92400e}
+.badge-accepted{background:#d1fae5;color:#065f46}
+.badge-rejected{background:#fee2e2;color:#991b1b}
+.action-btns{display:flex;gap:6px}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px;cursor:pointer;border:none;font-weight:600;transition:all .2s}
+.btn-sm-edit{background:#fef3c7;color:#92400e}.btn-sm-edit:hover{background:#F59E0B;color:#fff}
+.btn-sm-del{background:#fee2e2;color:#991b1b}.btn-sm-del:hover{background:#EF4444;color:#fff}
+
+/* Edit Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:20px;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:12px}
+.modal .form-group{margin-bottom:14px}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 22px;border-radius:10px;font-weight:600;font-size:14px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s;max-width:360px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#10B981;color:#fff}
+.toast.error{background:#EF4444;color:#fff}
+.toast.info{background:#2563EB;color:#fff}
+
+.result-box{background:#1e293b;color:#a3e635;padding:14px;border-radius:8px;font-family:monospace;font-size:12px;margin-top:12px;white-space:pre-wrap;display:none;max-height:200px;overflow-y:auto}
+.empty-state{padding:40px;text-align:center;color:#94a3b8}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⚡ FreelanceX — CRUD Operations Panel</h1>
+    <p>Database Systems Assignment 3 · MySQL + PHP · Full CRUD Implementation</p>
+  </div>
+  <div>
+    <span class="badge">Database: fxdb</span>&nbsp;
+    <a href="http://localhost/freelancex/" style="color:#fff;font-size:13px;text-decoration:underline">← Back to Website</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- CRUD Summary Cards -->
+  <div class="crud-cards">
+    <div class="crud-card create">
+      <div class="icon">➕</div>
+      <h3>CREATE</h3>
+      <p>Insert new records into the database</p>
+      <span class="op">POST Request</span>
+    </div>
+    <div class="crud-card read">
+      <div class="icon">📋</div>
+      <h3>READ</h3>
+      <p>Fetch and display all records from tables</p>
+      <span class="op">GET Request</span>
+    </div>
+    <div class="crud-card update">
+      <div class="icon">✏️</div>
+      <h3>UPDATE</h3>
+      <p>Modify existing records in the database</p>
+      <span class="op">PUT Request</span>
+    </div>
+    <div class="crud-card delete">
+      <div class="icon">🗑️</div>
+      <h3>DELETE</h3>
+      <p>Remove records permanently from tables</p>
+      <span class="op">DELETE Request</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('users')">👤 Users</button>
+    <button class="tab" onclick="switchTab('projects')">📁 Projects</button>
+    <button class="tab" onclick="switchTab('bids')">💼 Bids</button>
+    <button class="tab" onclick="switchTab('freelancers')">🌟 Freelancers</button>
+  </div>
+
+  <!-- ==================== USERS TAB ==================== -->
+  <div id="tab-users" class="tab-panel active">
+
+    <!-- CREATE -->
+    <div class="form-card">
+      <h3>➕ CREATE — Add New User</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="u_name" placeholder="e.g. Ahmed Khan">
+        </div>
+        <div class="form-group">
+          <label>Email Address *</label>
+          <input type="email" id="u_email" placeholder="ahmed@example.com">
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="text" id="u_phone" placeholder="+92-300-0000000">
+        </div>
+        <div class="form-group">
+          <label>Password *</label>
+          <input type="password" id="u_pass" placeholder="Min 8 characters">
+        </div>
+        <div class="form-group">
+          <label>Role *</label>
+          <select id="u_role">
+            <option value="client">Client</option>
+            <option value="freelancer">Freelancer</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-create" onclick="createUser()">➕ Create User</button>
+        <button class="btn btn-read" onclick="readUsers()">📋 Refresh Table</button>
+      </div>
+      <div class="result-box" id="u_result"></div>
+    </div>
+
+    <!-- READ -->
+    <div class="table-card">
+      <div class="table-header">
+        <span>📋 READ — All Users in Database</span>
+        <button class="btn btn-read" style="padding:7px 16px;font-size:12px" onclick="readUsers()">Refresh</button>
+      </div>
+      <div id="usersTable"><div class="empty-state">Click Refresh to load users from database</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== PROJECTS TAB ==================== -->
+  <div id="tab-projects" class="tab-panel">
+
+    <!-- CREATE -->
+    <div class="form-card">
+      <h3>➕ CREATE — Post New Project</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Project Title *</label>
+          <input type="text" id="p_title" placeholder="e.g. Build a website">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="p_cat">
+            <option>Web Development</option>
+            <option>Mobile Development</option>
+            <option>Logo Design</option>
+            <option>Content Writing</option>
+            <option>Digital Marketing / SEO</option>
+            <option>Video Editing</option>
+            <option>AI & Data Science</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client User ID *</label>
+          <input type="number" id="p_client" placeholder="e.g. 1">
+        </div>
+        <div class="form-group">
+          <label>Budget Min ($)</label>
+          <input type="number" id="p_bmin" placeholder="e.g. 200">
+        </div>
+        <div class="form-group">
+          <label>Budget Max ($)</label>
+          <input type="number" id="p_bmax" placeholder="e.g. 800">
+        </div>
+        <div class="form-group">
+          <label>Deadline</label>
+          <input type="date" id="p_deadline">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Description *</label>
+          <textarea id="p_desc" rows="3" placeholder="Describe the project requirements..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-create" onclick="createProject()">➕ Create Project</button>
+        <button class="btn btn-read" onclick="readProjects()">📋 Refresh Table</button>
+      </div>
+      <div class="result-box" id="p_result"></div>
+    </div>
+
+    <!-- READ -->
+    <div class="table-card">
+      <div class="table-header">
+        <span>📋 READ — All Projects in Database</span>
+        <button class="btn btn-read" style="padding:7px 16px;font-size:12px" onclick="readProjects()">Refresh</button>
+      </div>
+      <div id="projectsTable"><div class="empty-state">Click Refresh to load projects</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== BIDS TAB ==================== -->
+  <div id="tab-bids" class="tab-panel">
+
+    <!-- CREATE -->
+    <div class="form-card">
+      <h3>➕ CREATE — Submit New Bid</h3>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Freelancer User ID *</label>
+          <input type="number" id="b_flid" placeholder="e.g. 3">
+        </div>
+        <div class="form-group">
+          <label>Project ID *</label>
+          <input type="number" id="b_projid" placeholder="e.g. 1">
+        </div>
+        <div class="form-group">
+          <label>Proposed Amount ($) *</label>
+          <input type="number" id="b_amt" placeholder="e.g. 500">
+        </div>
+        <div class="form-group">
+          <label>Estimated Days</label>
+          <input type="number" id="b_days" placeholder="e.g. 14">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Cover Letter</label>
+          <textarea id="b_letter" rows="3" placeholder="Why are you the best fit for this project?"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-create" onclick="createBid()">➕ Submit Bid</button>
+        <button class="btn btn-read" onclick="readBids()">📋 Refresh Table</button>
+      </div>
+      <div class="result-box" id="b_result"></div>
+    </div>
+
+    <!-- READ -->
+    <div class="table-card">
+      <div class="table-header">
+        <span>📋 READ — All Bids in Database</span>
+        <button class="btn btn-read" style="padding:7px 16px;font-size:12px" onclick="readBids()">Refresh</button>
+      </div>
+      <div id="bidsTable"><div class="empty-state">Click Refresh to load bids</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== FREELANCERS TAB ==================== -->
+  <div id="tab-freelancers" class="tab-panel">
+    <div class="table-card">
+      <div class="table-header">
+        <span>📋 READ — All Freelancers in Database</span>
+        <button class="btn btn-read" style="padding:7px 16px;font-size:12px" onclick="readFreelancers()">Refresh</button>
+      </div>
+      <div id="freelancersTable"><div class="empty-state">Click Refresh to load freelancers</div></div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- ==================== EDIT MODALS ==================== -->
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal">
+    <h3>✏️ UPDATE — Edit User</h3>
+    <input type="hidden" id="edit_uid">
+    <div class="form-group"><label>Full Name</label><input type="text" id="edit_uname"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="edit_uemail"></div>
+    <div class="form-group"><label>Phone</label><input type="text" id="edit_uphone"></div>
+    <div class="form-group"><label>New Password (leave blank to keep)</label><input type="password" id="edit_upass"></div>
+    <div class="result-box" id="edit_u_result"></div>
+    <div class="modal-actions">
+      <button class="btn btn-update" onclick="updateUser()">✏️ Save Changes</button>
+      <button class="btn btn-outline" onclick="closeModal('editUserModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div class="modal-overlay" id="editProjectModal">
+  <div class="modal">
+    <h3>✏️ UPDATE — Edit Project</h3>
+    <input type="hidden" id="edit_pid">
+    <div class="form-group"><label>Title</label><input type="text" id="edit_ptitle"></div>
+    <div class="form-group"><label>Category</label><input type="text" id="edit_pcat"></div>
+    <div class="form-group"><label>Budget Min ($)</label><input type="number" id="edit_pbmin"></div>
+    <div class="form-group"><label>Budget Max ($)</label><input type="number" id="edit_pbmax"></div>
+    <div class="form-group"><label>Deadline</label><input type="date" id="edit_pdeadline"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="edit_pstatus">
+        <option value="open">Open</option>
+        <option value="in_progress">In Progress</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="edit_pdesc" rows="3"></textarea></div>
+    <div class="result-box" id="edit_p_result"></div>
+    <div class="modal-actions">
+      <button class="btn btn-update" onclick="updateProject()">✏️ Save Changes</button>
+      <button class="btn btn-outline" onclick="closeModal('editProjectModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Bid Modal -->
+<div class="modal-overlay" id="editBidModal">
+  <div class="modal">
+    <h3>✏️ UPDATE — Edit Bid Status</h3>
+    <input type="hidden" id="edit_bid">
+    <div class="form-group"><label>Proposed Amount ($)</label><input type="number" id="edit_bamt"></div>
+    <div class="form-group"><label>Estimated Days</label><input type="number" id="edit_bdays"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="edit_bstatus">
+        <option value="pending">Pending</option>
+        <option value="accepted">Accepted</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="result-box" id="edit_b_result"></div>
+    <div class="modal-actions">
+      <button class="btn btn-update" onclick="updateBid()">✏️ Save Changes</button>
+      <button class="btn btn-outline" onclick="closeModal('editBidModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost/freelancex/api/crud.php';
+
+// ===================== TAB SWITCHING =====================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  // Auto-load table
+  if(name==='users')       readUsers();
+  if(name==='projects')    readProjects();
+  if(name==='bids')        readBids();
+  if(name==='freelancers') readFreelancers();
+}
+
+// ===================== TOAST =====================
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+type;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function showResult(id, data) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  el.textContent = JSON.stringify(data, null, 2);
+}
+
+// ===================== MODAL =====================
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click', e=>{ if(e.target===m) m.classList.remove('open'); });
+});
+
+// ==========================================================
+// CREATE OPERATIONS
+// ==========================================================
+async function createUser() {
+  const body = {
+    full_name: document.getElementById('u_name').value.trim(),
+    email:     document.getElementById('u_email').value.trim(),
+    phone:     document.getElementById('u_phone').value.trim(),
+    password:  document.getElementById('u_pass').value,
+    role:      document.getElementById('u_role').value,
+  };
+  if(!body.full_name||!body.email||!body.password){toast('Full name, email and password are required','error');return;}
+  const res  = await fetch(`${API}?table=users`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('u_result', data);
+  if(data.success){ toast(`User created! ID: ${data.user_id}`,'success'); readUsers(); }
+  else toast('Error: '+data.error,'error');
+}
+
+async function createProject() {
+  const body = {
+    client_id:   parseInt(document.getElementById('p_client').value),
+    title:       document.getElementById('p_title').value.trim(),
+    description: document.getElementById('p_desc').value.trim(),
+    category:    document.getElementById('p_cat').value,
+    budget_min:  parseFloat(document.getElementById('p_bmin').value)||0,
+    budget_max:  parseFloat(document.getElementById('p_bmax').value)||0,
+    deadline:    document.getElementById('p_deadline').value,
+    scope:       'medium', experience: 'intermediate',
+  };
+  if(!body.title||!body.description||!body.client_id){toast('Title, description and client ID required','error');return;}
+  const res  = await fetch(`${API}?table=projects`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('p_result', data);
+  if(data.success){ toast(`Project created! ID: ${data.project_id}`,'success'); readProjects(); }
+  else toast('Error: '+data.error,'error');
+}
+
+async function createBid() {
+  const body = {
+    freelancer_id:   parseInt(document.getElementById('b_flid').value),
+    project_id:      parseInt(document.getElementById('b_projid').value),
+    proposed_amount: parseFloat(document.getElementById('b_amt').value)||0,
+    estimated_days:  parseInt(document.getElementById('b_days').value)||0,
+    cover_letter:    document.getElementById('b_letter').value.trim(),
+  };
+  if(!body.freelancer_id||!body.project_id){toast('Freelancer ID and Project ID required','error');return;}
+  const res  = await fetch(`${API}?table=bids`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('b_result', data);
+  if(data.success){ toast(`Bid submitted! ID: ${data.bid_id}`,'success'); readBids(); }
+  else toast('Error: '+data.error,'error');
+}
+
+// ==========================================================
+// READ OPERATIONS
+// ==========================================================
+async function readUsers() {
+  const res  = await fetch(`${API}?table=users`);
+  const data = await res.json();
+  if(!data.length){ document.getElementById('usersTable').innerHTML='<div class="empty-state">No users found in database. Create one above!</div>'; return; }
+  document.getElementById('usersTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>Full Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Registered</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(u=>`<tr>
+          <td><strong>#${u.user_id}</strong></td>
+          <td>${u.full_name}</td>
+          <td>${u.email}</td>
+          <td>${u.phone||'—'}</td>
+          <td><span class="badge-role badge-${u.role}">${u.role}</span></td>
+          <td>${u.created_at?.split('T')[0]||u.created_at||'—'}</td>
+          <td><div class="action-btns">
+            <button class="btn-sm btn-sm-edit" onclick="openEditUser(${u.user_id},'${u.full_name}','${u.email}','${u.phone||''}')">✏️ Edit</button>
+            <button class="btn-sm btn-sm-del" onclick="deleteRecord('users',${u.user_id},'${u.full_name}')">🗑️ Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  toast(`Loaded ${data.length} users`,'info');
+}
+
+async function readProjects() {
+  const res  = await fetch(`${API}?table=projects`);
+  const data = await res.json();
+  if(!data.length){ document.getElementById('projectsTable').innerHTML='<div class="empty-state">No projects found. Create one above!</div>'; return; }
+  document.getElementById('projectsTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>Title</th><th>Category</th><th>Client</th><th>Budget</th><th>Deadline</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(p=>`<tr>
+          <td><strong>#${p.project_id}</strong></td>
+          <td>${p.title}</td>
+          <td>${p.category||'—'}</td>
+          <td>${p.client_name||'#'+p.client_id}</td>
+          <td>$${p.budget_min||0}–$${p.budget_max||0}</td>
+          <td>${p.deadline||'Flexible'}</td>
+          <td><span class="badge-status badge-${p.status}">${p.status}</span></td>
+          <td><div class="action-btns">
+            <button class="btn-sm btn-sm-edit" onclick="openEditProject(${p.project_id},'${p.title}','${p.category||''}',${p.budget_min||0},${p.budget_max||0},'${p.deadline||''}','${p.status}','${(p.description||'').replace(/'/g,'')}')">✏️ Edit</button>
+            <button class="btn-sm btn-sm-del" onclick="deleteRecord('projects',${p.project_id},'${p.title}')">🗑️ Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  toast(`Loaded ${data.length} projects`,'info');
+}
+
+async function readBids() {
+  const res  = await fetch(`${API}?table=bids`);
+  const data = await res.json();
+  if(!data.length){ document.getElementById('bidsTable').innerHTML='<div class="empty-state">No bids found. Submit one above!</div>'; return; }
+  document.getElementById('bidsTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>Freelancer</th><th>Project</th><th>Amount</th><th>Days</th><th>Status</th><th>Submitted</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(b=>`<tr>
+          <td><strong>#${b.bid_id}</strong></td>
+          <td>${b.freelancer_name||'#'+b.freelancer_id}</td>
+          <td>${b.project_title||'#'+b.project_id}</td>
+          <td><strong>$${b.proposed_amount}</strong></td>
+          <td>${b.estimated_days||'—'} days</td>
+          <td><span class="badge-status badge-${b.status}">${b.status}</span></td>
+          <td>${(b.submitted_at||'').split(' ')[0]}</td>
+          <td><div class="action-btns">
+            <button class="btn-sm btn-sm-edit" onclick="openEditBid(${b.bid_id},${b.proposed_amount},${b.estimated_days||0},'${b.status}')">✏️ Edit</button>
+            <button class="btn-sm btn-sm-del" onclick="deleteRecord('bids',${b.bid_id},'Bid #'+${b.bid_id})">🗑️ Delete</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  toast(`Loaded ${data.length} bids`,'info');
+}
+
+async function readFreelancers() {
+  const res  = await fetch(`${API}?table=freelancers`);
+  const data = await res.json();
+  if(!data.length){ document.getElementById('freelancersTable').innerHTML='<div class="empty-state">No freelancers registered yet.</div>'; return; }
+  document.getElementById('freelancersTable').innerHTML = `
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Title</th><th>Hourly Rate</th><th>Avg Rating</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${data.map(f=>`<tr>
+          <td><strong>#${f.freelancer_id}</strong></td>
+          <td>${f.full_name}</td>
+          <td>${f.email}</td>
+          <td>${f.title||'—'}</td>
+          <td>${f.hourly_rate?'$'+f.hourly_rate+'/hr':'—'}</td>
+          <td>${f.avg_rating?'★ '+parseFloat(f.avg_rating).toFixed(1):'No ratings'}</td>
+          <td><div class="action-btns">
+            <button class="btn-sm btn-sm-del" onclick="deleteRecord('users',${f.freelancer_id},'${f.full_name}')">🗑️ Delete Account</button>
+          </div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  toast(`Loaded ${data.length} freelancers`,'info');
+}
+
+// ==========================================================
+// UPDATE OPERATIONS
+// ==========================================================
+function openEditUser(id, name, email, phone) {
+  document.getElementById('edit_uid').value   = id;
+  document.getElementById('edit_uname').value  = name;
+  document.getElementById('edit_uemail').value = email;
+  document.getElementById('edit_uphone').value = phone;
+  document.getElementById('edit_upass').value  = '';
+  document.getElementById('edit_u_result').style.display = 'none';
+  openModal('editUserModal');
+}
+
+async function updateUser() {
+  const id   = document.getElementById('edit_uid').value;
+  const body = {};
+  const name = document.getElementById('edit_uname').value.trim();
+  const email= document.getElementById('edit_uemail').value.trim();
+  const phone= document.getElementById('edit_uphone').value.trim();
+  const pass = document.getElementById('edit_upass').value;
+  if(name)  body.full_name = name;
+  if(email) body.email     = email;
+  if(phone) body.phone     = phone;
+  if(pass)  body.password  = pass;
+  const res  = await fetch(`${API}?table=users&id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('edit_u_result', data);
+  if(data.success){ toast('User updated successfully!','success'); readUsers(); closeModal('editUserModal'); }
+  else toast('Error: '+data.error,'error');
+}
+
+function openEditProject(id, title, cat, bmin, bmax, deadline, status, desc) {
+  document.getElementById('edit_pid').value        = id;
+  document.getElementById('edit_ptitle').value     = title;
+  document.getElementById('edit_pcat').value       = cat;
+  document.getElementById('edit_pbmin').value      = bmin;
+  document.getElementById('edit_pbmax').value      = bmax;
+  document.getElementById('edit_pdeadline').value  = deadline;
+  document.getElementById('edit_pstatus').value    = status;
+  document.getElementById('edit_pdesc').value      = desc;
+  document.getElementById('edit_p_result').style.display = 'none';
+  openModal('editProjectModal');
+}
+
+async function updateProject() {
+  const id   = document.getElementById('edit_pid').value;
+  const body = {
+    title:      document.getElementById('edit_ptitle').value.trim(),
+    category:   document.getElementById('edit_pcat').value.trim(),
+    budget_min: parseFloat(document.getElementById('edit_pbmin').value)||0,
+    budget_max: parseFloat(document.getElementById('edit_pbmax').value)||0,
+    deadline:   document.getElementById('edit_pdeadline').value,
+    status:     document.getElementById('edit_pstatus').value,
+    description:document.getElementById('edit_pdesc').value.trim(),
+  };
+  const res  = await fetch(`${API}?table=projects&id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('edit_p_result', data);
+  if(data.success){ toast('Project updated!','success'); readProjects(); closeModal('editProjectModal'); }
+  else toast('Error: '+data.error,'error');
+}
+
+function openEditBid(id, amt, days, status) {
+  document.getElementById('edit_bid').value     = id;
+  document.getElementById('edit_bamt').value    = amt;
+  document.getElementById('edit_bdays').value   = days;
+  document.getElementById('edit_bstatus').value = status;
+  document.getElementById('edit_b_result').style.display = 'none';
+  openModal('editBidModal');
+}
+
+async function updateBid() {
+  const id   = document.getElementById('edit_bid').value;
+  const body = {
+    proposed_amount: parseFloat(document.getElementById('edit_bamt').value),
+    estimated_days:  parseInt(document.getElementById('edit_bdays').value),
+    status:          document.getElementById('edit_bstatus').value,
+  };
+  const res  = await fetch(`${API}?table=bids&id=${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  showResult('edit_b_result', data);
+  if(data.success){ toast('Bid updated!','success'); readBids(); closeModal('editBidModal'); }
+  else toast('Error: '+data.error,'error');
+}
+
+// ==========================================================
+// DELETE OPERATIONS
+// ==========================================================
+async function deleteRecord(table, id, name) {
+  if(!confirm(`DELETE "${name}" from ${table}?\n\nThis cannot be undone!`)) return;
+  const res  = await fetch(`${API}?table=${table}&id=${id}`,{method:'DELETE'});
+  const data = await res.json();
+  if(data.success){
+    toast(`Deleted: ${name}`,'success');
+    if(table==='users')    readUsers();
+    if(table==='projects') readProjects();
+    if(table==='bids')     readBids();
+  } else {
+    toast('Delete failed: '+data.error,'error');
+  }
+}
+
+// Auto-load users on page open
+readUsers();
+</script>
+</body>
+</html>
